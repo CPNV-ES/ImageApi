@@ -1,5 +1,8 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
+using Azure;
 using ImageApi.Azure;
 using NUnit.Framework;
 
@@ -28,10 +31,12 @@ namespace TestImageApi.Tests
         [SetUp]
         public void Init()
         {
-            this.pathToTestFolder = Directory.GetCurrentDirectory().Replace("bin\\Debug\\netcoreapp3.1", "testData");
+            this.pathToTestFolder = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.ToString(), "testData");
             this.containerName = "testbucket";
             this.blobName= "emiratesa380.jpg";
-            this.bucketManager = new AzureBlobManager(this.containerName);
+            this.bucketManager = new AzureBlobManager();
+
+            Cleanup();
         }
 
         /// <summary>
@@ -45,7 +50,7 @@ namespace TestImageApi.Tests
             Assert.IsFalse(await this.bucketManager.ObjectExists(containerName));
 
             //when
-            await this.bucketManager.CreateObject(containerName);
+            await CreateObjectWhenAvailable(containerName);
 
             //then
             Assert.IsTrue(await this.bucketManager.ObjectExists(containerName));
@@ -61,12 +66,14 @@ namespace TestImageApi.Tests
             //given
             string fileName = this.blobName;
             string objectUrl = this.containerName + "/" + this.blobName;
-            await this.bucketManager.CreateObject(this.containerName);
+
+            await CreateObjectWhenAvailable(this.containerName);
+            
             Assert.IsTrue(await this.bucketManager.ObjectExists(this.containerName));
             Assert.IsFalse(await this.bucketManager.ObjectExists(objectUrl));
 
             //when
-            await this.bucketManager.CreateObject(objectUrl, this.pathToTestFolder + "//" + fileName);
+            await this.bucketManager.CreateObject(objectUrl, Path.Combine(this.pathToTestFolder, fileName));
 
             //then
             Assert.IsTrue(await this.bucketManager.ObjectExists(objectUrl));
@@ -86,7 +93,7 @@ namespace TestImageApi.Tests
             Assert.IsFalse(await this.bucketManager.ObjectExists(objectUrl));
 
             //when
-            await this.bucketManager.CreateObject(objectUrl, this.pathToTestFolder + "//" + fileName);
+            await CreateObjectWhenAvailable(objectUrl, Path.Combine(this.pathToTestFolder, fileName));
 
             //then
             Assert.IsTrue(await this.bucketManager.ObjectExists(objectUrl));
@@ -100,7 +107,7 @@ namespace TestImageApi.Tests
         {
             //given
             string objectUrl = containerName + "//" + this.blobName;
-            string destinationFullPath = this.pathToTestFolder + "//" + this.prefixObjectDownloaded + this.blobName;
+            string destinationFullPath = this.pathToTestFolder + "//" + this.blobName;
             await this.bucketManager.CreateObject(objectUrl, this.pathToTestFolder + "//" + this.blobName);
 
             Assert.IsTrue(await this.bucketManager.ObjectExists(containerName));
@@ -138,7 +145,7 @@ namespace TestImageApi.Tests
         public async Task IsObjectExists_ObjectNotExistBucket_Success()
         {
             //given
-            string notExistingBucket = "notExistingBucket" + this.domain;
+            string notExistingBucket = "notExistingBucket" ;
             bool actualResult;
 
             //when
@@ -213,20 +220,50 @@ namespace TestImageApi.Tests
         /// This test method cleans up the context after each test method run.
         /// </summary>
         [TearDown]
-        public async Task Cleanup()
+        public void Cleanup()
         {
-            string destinationFullPath = this.pathToTestFolder + "\\" + this.prefixObjectDownloaded + this.blobName;
+            string destinationFullPath = Path.Combine(this.pathToTestFolder, "out", this.blobName);
 
             if (File.Exists(destinationFullPath))
             {
                 File.Delete(destinationFullPath);
             }
 
-            this.bucketManager = new AzureBlobManager(this.containerName);
-            if (await this.bucketManager.ObjectExists(containerName))
+            this.bucketManager = new AzureBlobManager();
+            if (this.bucketManager.ObjectExists(containerName).Result)
             {
-                await this.bucketManager.RemoveObject(this.containerName);
+                this.bucketManager.RemoveObject(this.containerName).Wait();
             }
+        }
+
+        /// <summary>
+        /// Because we delete the container after each test, we need to make sure it's finished being deleted before we create it again.
+        /// This method creates a new object and retries after 3 seconds if the container is not yet deleted.
+        /// It stills throws for every other type of exceptions.
+        /// </summary>
+        /// <param name="containerName"></param>
+        /// <param name="filePath"></param>
+        private async Task CreateObjectWhenAvailable(string containerName, string filePath = "")
+        {
+            do {
+                try {
+                    // If there's no filepath, we create only a container
+                    if (filePath == "")
+                        await this.bucketManager.CreateObject(containerName);
+                    else
+                        await this.bucketManager.CreateObject(containerName, filePath);
+                    
+                    break;
+                }
+                catch(RequestFailedException ex) {
+                    // 409: The speficied container is being deleted. Try operation later.
+                    if(ex.Status == 409) 
+                        Thread.Sleep(3000); // If it's that specific error, try again after 3 seconds   
+                    else 
+                        throw;  // Else just return the exception
+                    
+                }
+            } while(true); // TODO: Set up a timeout or max retries
         }
     }
 }
