@@ -31,10 +31,12 @@ namespace TestImageApi.Tests
         [SetUp]
         public void Init()
         {
+            var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING") ?? throw new Exception("No Azure Storage Connection String");
+            
             this.pathToTestFolder = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.ToString(), "testData");
             this.containerName = "testbucket";
             this.blobName= "emiratesa380.jpg";
-            this.bucketManager = new AzureBlobManager();
+            this.bucketManager = new AzureBlobManager(connectionString);
 
             Cleanup();
         }
@@ -229,7 +231,6 @@ namespace TestImageApi.Tests
                 File.Delete(destinationFullPath);
             }
 
-            this.bucketManager = new AzureBlobManager();
             if (this.bucketManager.ObjectExists(containerName).Result)
             {
                 this.bucketManager.RemoveObject(this.containerName).Wait();
