@@ -11,10 +11,11 @@ namespace ImageApi.Azure
 
         private BlobServiceClient blobServiceClient;
         private BlobContainerClient blobClient;
-        private string storageConnectionString => Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING") ?? throw new Exception("No Azure Storage Connection String"); 
+        private string storageConnectionString; 
         
-        public AzureBlobManager()
+        public AzureBlobManager(string connectionString)
         {
+            storageConnectionString = connectionString;
             blobServiceClient = new BlobServiceClient(storageConnectionString);
         }
 
