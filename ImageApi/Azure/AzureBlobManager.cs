@@ -55,7 +55,7 @@ namespace ImageApi.Azure
 
             // If there's no file name, it's a container
             if (fileName == "")
-                return blobContainerClient.ExistsAsync().Result;
+                return await blobContainerClient.ExistsAsync();
             else
                 return await blob.ExistsAsync();
         }
