@@ -23,7 +23,7 @@ namespace TestImageApi.Tests
         [SetUp]
         public void Init()
         {
-            cvManager = new("https://ria2-cognitiveservice.cognitiveservices.azure.com/", "43a08f2d34f34f60a906c85f387003eb");
+            cvManager = new("https://ria2-cognitiveservice.cognitiveservices.azure.com/", "***REMOVED***");
         }
 
         [Test]

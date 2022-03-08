@@ -17,7 +17,7 @@ namespace ImageApi.Controllers
         {
             _hostingEnvironment = environment;
             _blobManager = new AzureBlobManager(Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING"));
-            _cvManager = new CvManager("https://ria2-cognitiveservice.cognitiveservices.azure.com/", "43a08f2d34f34f60a906c85f387003eb");
+            _cvManager = new CvManager("https://ria2-cognitiveservice.cognitiveservices.azure.com/", "***REMOVED***");
         }
         // GET: api/<ImageController>
         [HttpGet]
