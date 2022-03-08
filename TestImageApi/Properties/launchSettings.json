@@ -1,7 +1,10 @@
 {
   "profiles": {
     "TestImageApi": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "environmentVariables": {
+        "AZURE_STORAGE_CONNECTIONSTRING": "***REMOVED***"
+      }
     }
   }
 }
