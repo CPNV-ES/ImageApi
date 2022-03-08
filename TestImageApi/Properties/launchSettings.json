@@ -1,7 +1,10 @@
 {
   "profiles": {
     "TestImageApi": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "environmentVariables": {
+        "AZURE_STORAGE_CONNECTIONSTRING": "DefaultEndpointsProtocol=https;AccountName=storageaccountria2;AccountKey=EmUPiifAUE6iqcKE/zZln9am3ItOnSMK8sCwUkebqJyaBGa/9UjlQIsXMIbS5G4jUgz3JaxCpuG0JAuIph74HQ==;EndpointSuffix=core.windows.net"
+      }
     }
   }
 }
