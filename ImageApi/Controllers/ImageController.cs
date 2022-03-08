@@ -1,5 +1,6 @@
 ﻿using ImageApi.Azure;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,11 +12,12 @@ namespace ImageApi.Controllers
     {
         private IWebHostEnvironment _hostingEnvironment;
         private AzureBlobManager _blobManager;
+        private CvManager _cvManager;
         public ImageController(IWebHostEnvironment environment)
         {
             _hostingEnvironment = environment;
-            Console.WriteLine(Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING"));
             _blobManager = new AzureBlobManager(Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING"));
+            _cvManager = new CvManager("https://ria2-cognitiveservice.cognitiveservices.azure.com/", "***REMOVED***");
         }
         // GET: api/<ImageController>
         [HttpGet]
@@ -33,7 +35,7 @@ namespace ImageApi.Controllers
 
         // POST api/<ImageController>
         [HttpPost]
-        public async Task Post(IFormFile file)
+        public async Task<ImageAnalysis> Post(IFormFile file)
         {
             string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "uploads");
             string filePath = "";
@@ -47,7 +49,10 @@ namespace ImageApi.Controllers
             }
            
             await this._blobManager.CreateObject("imganalysis/"+ file.FileName, filePath);
-       
+            
+            var client = await this._cvManager.CreateClient();
+           
+            return await this._cvManager.AnalyzeImage(client, "https://storageaccountria2.blob.core.windows.net/imganalysis/"+file.FileName); 
         }
 
         // PUT api/<ImageController>/5
