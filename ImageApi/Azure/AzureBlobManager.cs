@@ -29,7 +29,7 @@ namespace ImageApi.Azure
             var (containerName, fileName) = parseObjectUrl(objectUrl);
             
             var blobContainerClient = new BlobContainerClient(storageConnectionString, containerName);
-
+            Console.WriteLine(blobContainerClient);
             // Create the container if it doesn't already exist.
             if (!await blobContainerClient.ExistsAsync()) {
                 await CreateObject(containerName);
