@@ -48,11 +48,13 @@ namespace ImageApi.Controllers
                 }
             }
            
-            await this._blobManager.CreateObject("imganalysis/"+ file.FileName, filePath);
+            await this._blobManager.CreateObject("imganalysis/" + file.FileName, filePath);
             
             var client = await this._cvManager.CreateClient();
-           
-            return await this._cvManager.AnalyzeImage(client, "https://storageaccountria2.blob.core.windows.net/imganalysis/"+file.FileName); 
+            
+            ImageAnalysis imageAnalized = await this._cvManager.AnalyzeImage(client, "https://storageaccountria2.blob.core.windows.net/imganalysis/"+file.FileName);
+            await _blobManager.RemoveObject("imganalysis/" + file.FileName);
+            return imageAnalized;
         }
 
         // PUT api/<ImageController>/5
