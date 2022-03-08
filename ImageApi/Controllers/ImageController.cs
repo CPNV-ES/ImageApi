@@ -14,6 +14,7 @@ namespace ImageApi.Controllers
         public ImageController(IWebHostEnvironment environment)
         {
             _hostingEnvironment = environment;
+            Console.WriteLine(Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING"));
             _blobManager = new AzureBlobManager(Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING"));
         }
         // GET: api/<ImageController>
@@ -44,9 +45,9 @@ namespace ImageApi.Controllers
                     await file.CopyToAsync(fileStream);
                 }
             }
-            Console.WriteLine("ImageAnalysis/" + file.FileName, filePath);
-            await this._blobManager.CreateObject("ImageAnalysis/"+ file.FileName, filePath);
-            Console.WriteLine("Finished");
+           
+            await this._blobManager.CreateObject("imganalysis/"+ file.FileName, filePath);
+       
         }
 
         // PUT api/<ImageController>/5
