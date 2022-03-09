@@ -193,20 +193,19 @@ namespace TestImageApi.Tests
         [Test]
         public async Task RemoveObject_NotEmptyBucket_Success()
         {
-            //given
-            string fileName = this.blobName;
-            string objectUrl = this.containerName + "/" + this.blobName;
-            await this.bucketManager.CreateObject(this.containerName);
-            await this.bucketManager.CreateObject(objectUrl, this.pathToTestFolder + "//" + fileName);
 
-            Assert.IsTrue(await this.bucketManager.ObjectExists(containerName));
-            Assert.IsTrue(await this.bucketManager.ObjectExists(objectUrl));
+            //given
+            await this.bucketManager.CreateObject(this.containerName);
+            await this.bucketManager.CreateObject(this.blobName);
+            Assert.IsTrue(await this.bucketManager.ObjectExists(this.containerName));
+            Assert.IsTrue(await this.bucketManager.ObjectExists(this.blobName));
 
             //when
             await this.bucketManager.RemoveObject(this.containerName);
 
+
             //then
-            Assert.IsFalse(await this.bucketManager.ObjectExists(containerName));
+            Assert.IsFalse(await this.bucketManager.ObjectExists(this.containerName));
         }
 
         /// <summary>
@@ -215,7 +214,7 @@ namespace TestImageApi.Tests
         [TearDown]
         public async Task Cleanup()
         {
-            string destinationFullPath = this.pathToTestFolder + "\\" + this.prefixObjectDownloaded + this.blobName;
+            string destinationFullPath = this.pathToTestFolder + "\\" + this.blobName;
 
             if (File.Exists(destinationFullPath))
             {
