@@ -31,7 +31,8 @@ namespace TestImageApi.Tests
         [SetUp]
         public void Init()
         {
-            var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING") ?? throw new Exception("No Azure Storage Connection String");
+            var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING")
+                                   ?? throw new Exception("No Azure Storage Connection String set in environment variables (AZURE_STORAGE_CONNECTION_STRING)");
             
             this.pathToTestFolder = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.ToString(), "testData");
             this.containerName = "testbucket";

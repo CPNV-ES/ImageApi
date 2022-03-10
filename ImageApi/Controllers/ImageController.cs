@@ -13,11 +13,18 @@ namespace ImageApi.Controllers
         private IWebHostEnvironment _hostingEnvironment;
         private AzureBlobManager _blobManager;
         private CvManager _cvManager;
+        private string cognitiveEndPoint = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_ENDPOINT") 
+                                           ?? throw new Exception("No Azure Cognitive Service Endpoint set in environment variables (AZURE_COGNITIVE_ENDPOINT)");
+        private string cognitiveKey = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_KEY") 
+                                      ?? throw new Exception("No Azure Cognitive Service Pass set in environment variables (AZURE_COGNITIVE_KEY)");
+        private string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING") 
+                                          ?? throw new Exception("No Azure Storage Connection String set in environment variables (AZURE_STORAGE_CONNECTION_STRING)");
+        
         public ImageController(IWebHostEnvironment environment)
         {
             _hostingEnvironment = environment;
-            _blobManager = new AzureBlobManager(Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING"));
-            _cvManager = new CvManager("https://ria2-cognitiveservice.cognitiveservices.azure.com/", "***REMOVED***");
+            _blobManager = new AzureBlobManager(connectionString);
+            _cvManager = new CvManager(cognitiveEndPoint, cognitiveKey);
         }
         // GET: api/<ImageController>
         [HttpGet]

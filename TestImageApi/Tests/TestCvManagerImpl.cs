@@ -15,6 +15,10 @@ namespace TestImageApi.Tests
         #region private attributes
         private CvManager cvManager;
         private ImageAnalysis results;
+        private string endPoint = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_ENDPOINT") 
+                                  ?? throw new Exception("No Azure Cognitive Service Endpoint set in environment variables (AZURE_COGNITIVE_ENDPOINT)");
+        private string key = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_KEY") 
+                             ?? throw new Exception("No Azure Cognitive Service Pass set in environment variables (AZURE_COGNITIVE_KEY)");
         #endregion private attributes
 
         /// <summary>
@@ -23,7 +27,7 @@ namespace TestImageApi.Tests
         [SetUp]
         public void Init()
         {
-            cvManager = new("https://ria2-cognitiveservice.cognitiveservices.azure.com/", "***REMOVED***");
+            cvManager = new(endPoint, key);
         }
 
         [Test]
