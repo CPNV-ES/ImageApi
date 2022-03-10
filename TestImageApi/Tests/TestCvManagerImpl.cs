@@ -27,7 +27,7 @@ namespace TestImageApi.Tests
         [SetUp]
         public void Init()
         {
-            cvManager = new(Environment.GetEnvironmentVariable("AZURE_COGNITIVE_ENDPOINT"), Environment.GetEnvironmentVariable("AZURE_COGNITIVE_KEY"));
+            cvManager = new(endPoint, key);
         }
 
         [Test]
