@@ -23,7 +23,8 @@ namespace ImageApi.Controllers
         public ImageController(IWebHostEnvironment environment)
         {
             _hostingEnvironment = environment;
-         
+            _blobManager = new AzureBlobManager(connectionString);
+            _cvManager = new CvManager(cognitiveEndPoint, cognitiveKey);
         }
         
 
