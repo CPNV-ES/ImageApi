@@ -1,4 +1,6 @@
-﻿namespace ImageApi.Azure
+﻿using Azure.Storage.Blobs;
+
+namespace ImageApi.Azure
 {
     public class AzureBlobManager : IBlobManager
     {
@@ -66,19 +68,6 @@
                 await blobContainerClient.DeleteAsync();    // Delete the container
             else
                 await blob.DeleteAsync();   // Delete the blob
-        }
-
-        /// <summary>
-        /// Remove object from 
-        /// </summary>
-        /// <param name="objectUrl"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public async Task RemoveObject(string objectUrl)
-        {
-            string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
-            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
-            await blobServiceClient.DeleteBlobContainerAsync(connectionString);
         }
         
         /// <summary>
