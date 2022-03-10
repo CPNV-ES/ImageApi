@@ -3,6 +3,7 @@ using System.IO;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 
 namespace ImageApi.Azure
 {
@@ -10,7 +11,6 @@ namespace ImageApi.Azure
     {
 
         private BlobServiceClient blobServiceClient;
-        private BlobContainerClient blobClient;
         private string storageConnectionString; 
         
         public AzureBlobManager(string connectionString)
@@ -73,7 +73,46 @@ namespace ImageApi.Azure
             else
                 await blob.DeleteAsync();   // Delete the blob
         }
-        
+  
+
+        public String GetServiceSasUriForBlob(string fileName, string containerName, string storedPolicyName = null)
+        {
+            var blobContainerClient = new BlobContainerClient(storageConnectionString, containerName);
+
+
+            var blob = blobContainerClient.GetBlobClient(fileName);
+
+            // Check whether this BlobClient object has been authorized with Shared Key.
+            if (blob.CanGenerateSasUri)
+            {
+                // Create a SAS token that's valid for one hour.
+                BlobSasBuilder sasBuilder = new BlobSasBuilder()
+                {
+                    BlobContainerName = containerName,
+                    BlobName = blob.Name,
+                    Resource = "b"
+                };
+
+                if (storedPolicyName == null)
+                {
+                    sasBuilder.ExpiresOn = DateTimeOffset.UtcNow.AddHours(1);
+                    sasBuilder.SetPermissions(BlobSasPermissions.Read |
+                        BlobSasPermissions.Write);
+                }
+                else
+                {
+                    sasBuilder.Identifier = storedPolicyName;
+                }
+
+
+                return blob.GenerateSasUri(sasBuilder).ToString();
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         /// <summary>
         /// Parses the object url into a tuple of container name and file name
         /// </summary>

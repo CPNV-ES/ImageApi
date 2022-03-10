@@ -23,7 +23,7 @@ namespace TestImageApi.Tests
         [SetUp]
         public void Init()
         {
-            cvManager = new("https://ria2-cognitiveservice.cognitiveservices.azure.com/", "***REMOVED***");
+            cvManager = new(Environment.GetEnvironmentVariable("AZURE_COGNITIV_SERVICE_ENDPOINT"), Environment.GetEnvironmentVariable("AZURE_COGNITIV_SERVICE_KEY"));
         }
 
         [Test]
@@ -37,7 +37,7 @@ namespace TestImageApi.Tests
         {
             var client = await cvManager.CreateClient();
 
-            results = await cvManager.AnalyzeImage(client, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMXW6Dmka_PWSaR862RMAEAVMZCSqkpJp-CA&usqp=CAU");
+            results = await cvManager.AnalyzeImage(client, "https://storageaccountria2.blob.core.windows.net/imganalysis/t%C3%A9l%C3%A9chargement.png?sp=r&st=2022-03-10T10:21:51Z&se=2022-03-10T18:21:51Z&spr=https&sv=2020-08-04&sr=b&sig=b1nYCt0J2TYKUVLNN4pXRPlNLoFcsJHdIAOj3oSRoW4%3D");
 
             Assert.IsNotNull(results);
         }
