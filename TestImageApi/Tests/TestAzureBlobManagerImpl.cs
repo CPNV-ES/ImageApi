@@ -21,9 +21,25 @@ namespace TestImageApi.Tests
         private string blobName;
         private string containerName;
         private string pathToTestFolder;
-        
+        private string createEmptyContainer;
+        private string createFilledContainer;
         
         #endregion private attributes
+
+        [OneTimeSetUp]
+        public void GlobalSetUp()
+        {
+            var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING") ?? throw new Exception("No Azure Storage Connection String");
+
+            this.pathToTestFolder = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.ToString(), "testData");
+            this.containerName = "testbucket";
+            this.createEmptyContainer = "testcreatecontainer";
+            this.createFilledContainer = "filledcontainer";
+            this.blobName = "emiratesa380.jpg";
+            this.bucketManager = new AzureBlobManager(connectionString);
+            //CreateObjectWhenAvailable(containerName).Wait();
+            this.bucketManager.CreateObject(containerName).Wait();
+        }
 
         /// <summary>
         /// This test method initializes the context before each test method run.
@@ -31,14 +47,7 @@ namespace TestImageApi.Tests
         [SetUp]
         public void Init()
         {
-            var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTIONSTRING") ?? throw new Exception("No Azure Storage Connection String");
-            
-            this.pathToTestFolder = Path.Combine(Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.ToString(), "testData");
-            this.containerName = "testbucket";
-            this.blobName= "emiratesa380.jpg";
-            this.bucketManager = new AzureBlobManager(connectionString);
 
-            Cleanup();
         }
 
         /// <summary>
@@ -49,13 +58,16 @@ namespace TestImageApi.Tests
         public async Task CreateObject_CreateNewBucket_Success()
         {
             //given
-            Assert.IsFalse(await this.bucketManager.ObjectExists(containerName));
+            Assert.IsFalse(await this.bucketManager.ObjectExists(createEmptyContainer));
 
             //when
-            await CreateObjectWhenAvailable(containerName);
+            await CreateObjectWhenAvailable(createEmptyContainer);
 
             //then
-            Assert.IsTrue(await this.bucketManager.ObjectExists(containerName));
+            Assert.IsTrue(await this.bucketManager.ObjectExists(createEmptyContainer));
+
+
+
         }
 
         /// <summary>
@@ -68,8 +80,6 @@ namespace TestImageApi.Tests
             //given
             string fileName = this.blobName;
             string objectUrl = this.containerName + "/" + this.blobName;
-
-            await CreateObjectWhenAvailable(this.containerName);
             
             Assert.IsTrue(await this.bucketManager.ObjectExists(this.containerName));
             Assert.IsFalse(await this.bucketManager.ObjectExists(objectUrl));
@@ -90,10 +100,10 @@ namespace TestImageApi.Tests
         {
             //given
             string fileName = this.blobName;
-            string objectUrl = this.containerName + "/" + this.blobName;
-            Assert.IsFalse(await this.bucketManager.ObjectExists(this.containerName));
+            string objectUrl = createFilledContainer + "/" + this.blobName;
+            Assert.IsFalse(await this.bucketManager.ObjectExists(createFilledContainer));
             Assert.IsFalse(await this.bucketManager.ObjectExists(objectUrl));
-
+             
             //when
             await CreateObjectWhenAvailable(objectUrl, Path.Combine(this.pathToTestFolder, fileName));
 
@@ -109,8 +119,7 @@ namespace TestImageApi.Tests
         {
             //given
             string objectUrl = containerName + "//" + this.blobName;
-            string destinationFullPath = this.pathToTestFolder + "//" + this.blobName;
-            await this.bucketManager.CreateObject(objectUrl, this.pathToTestFolder + "//" + this.blobName);
+            string destinationFullPath = this.pathToTestFolder + "//" + this.blobName + "test.jpg";
 
             Assert.IsTrue(await this.bucketManager.ObjectExists(containerName));
 
@@ -127,16 +136,7 @@ namespace TestImageApi.Tests
         [Test]
         public async Task IsObjectExists_NominalCase_Success()
         {
-            //given
-            Task t = this.bucketManager.CreateObject(this.containerName);
-            await t;
-            bool actualResult;
-
-            //when
-            actualResult = await this.bucketManager.ObjectExists(containerName);
-
-            //then
-            Assert.IsTrue(actualResult);
+            Assert.IsTrue(await this.bucketManager.ObjectExists(containerName));
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace TestImageApi.Tests
         public async Task IsObjectExists_ObjectNotExistBucket_Success()
         {
             //given
-            string notExistingBucket = "notExistingBucket" ;
+            string notExistingBucket = "notexistingbucket" ;
             bool actualResult;
 
             //when
@@ -165,8 +165,7 @@ namespace TestImageApi.Tests
         public async Task IsObjectExists_ObjectNotExistFile_Success()
         {
             //given
-            await this.bucketManager.CreateObject(this.containerName);
-            string notExistingFile = containerName + "//" + "notExistingFile.jpg";
+            string notExistingFile = containerName + "//" + "notexistfile.jpg";
             Assert.IsTrue(await this.bucketManager.ObjectExists(containerName));
             bool actualResult;
 
@@ -185,14 +184,14 @@ namespace TestImageApi.Tests
         public async Task RemoveObject_EmptyBucket_Success()
         {
             //given
-            await this.bucketManager.CreateObject(this.containerName);
-            Assert.IsTrue(await this.bucketManager.ObjectExists(containerName));
+
+            Assert.IsTrue(await this.bucketManager.ObjectExists(createEmptyContainer));
 
             //when
-            await this.bucketManager.RemoveObject(this.containerName);
+            await this.bucketManager.RemoveObject(createEmptyContainer);
 
             //then
-            Assert.IsFalse(await this.bucketManager.ObjectExists(containerName));
+            Assert.IsFalse(await this.bucketManager.ObjectExists(createEmptyContainer));
         }
 
         /// <summary>
@@ -204,17 +203,14 @@ namespace TestImageApi.Tests
         {
 
             //given
-            await this.bucketManager.CreateObject(this.containerName);
-            await this.bucketManager.CreateObject(this.blobName);
-            Assert.IsTrue(await this.bucketManager.ObjectExists(this.containerName));
-            Assert.IsTrue(await this.bucketManager.ObjectExists(this.blobName));
+            Assert.IsTrue(await this.bucketManager.ObjectExists(createFilledContainer));
 
             //when
-            await this.bucketManager.RemoveObject(this.containerName);
+            await this.bucketManager.RemoveObject(createFilledContainer);
 
-
+            Console.WriteLine(createFilledContainer);
             //then
-            Assert.IsFalse(await this.bucketManager.ObjectExists(this.containerName));
+            Assert.IsFalse(await this.bucketManager.ObjectExists(createFilledContainer));
         }
 
         /// <summary>
@@ -223,17 +219,7 @@ namespace TestImageApi.Tests
         [TearDown]
         public void Cleanup()
         {
-            string destinationFullPath = Path.Combine(this.pathToTestFolder, "out", this.blobName);
 
-            if (File.Exists(destinationFullPath))
-            {
-                File.Delete(destinationFullPath);
-            }
-
-            if (this.bucketManager.ObjectExists(containerName).Result)
-            {
-                this.bucketManager.RemoveObject(this.containerName).Wait();
-            }
         }
 
         /// <summary>
@@ -264,6 +250,21 @@ namespace TestImageApi.Tests
                     
                 }
             } while(true); // TODO: Set up a timeout or max retries
+        }
+
+
+        [OneTimeTearDown]
+        public void GlobalTearDown()
+        {
+            if (this.bucketManager.ObjectExists(this.containerName).Result)
+            {
+                this.bucketManager.RemoveObject(this.containerName).Wait();
+            }
+            string destinationFullPath = this.pathToTestFolder + "//" + this.blobName + "test.jpg";
+            if (File.Exists(destinationFullPath))
+            {
+                File.Delete(destinationFullPath);
+            }
         }
     }
 }

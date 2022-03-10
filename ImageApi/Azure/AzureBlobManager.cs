@@ -39,7 +39,10 @@ namespace ImageApi.Azure
 
         public Task DownloadObject(string objectUrl, string destinationUri)
         {
-            throw new NotImplementedException();
+            var (containerName, fileName) = parseObjectUrl(objectUrl);
+            BlobContainerClient blobContainerClient = new BlobContainerClient(storageConnectionString,containerName);
+            BlobClient blob = blobContainerClient.GetBlobClient(fileName);
+            return blob.DownloadToAsync(destinationUri);
         }
 
         public async Task<bool> ObjectExists(string objectUrl)
