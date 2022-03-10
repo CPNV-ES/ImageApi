@@ -1,18 +1,38 @@
-﻿using Azure.Storage.Blobs;
-
-namespace ImageApi.Azure
+﻿namespace ImageApi.Azure
 {
     public class AzureBlobManager : IBlobManager
     {
 
-        public AzureBlobManager(string bucketUrl)
+        private BlobServiceClient blobServiceClient;
+        private BlobContainerClient blobClient;
+        private string storageConnectionString; 
+        
+        public AzureBlobManager(string connectionString)
         {
-            throw new NotImplementedException();
+            storageConnectionString = connectionString;
+            blobServiceClient = new BlobServiceClient(storageConnectionString);
         }
 
-        public Task CreateObject(string objectUrl, string filePath = "")
+        public async Task CreateObject(string objectUrl)
         {
-            throw new NotImplementedException();
+            await blobServiceClient.CreateBlobContainerAsync(objectUrl);
+        }
+
+        public async Task CreateObject(string objectUrl, string filePath)
+        {
+            var (containerName, fileName) = parseObjectUrl(objectUrl);
+            
+            var blobContainerClient = new BlobContainerClient(storageConnectionString, containerName);
+            Console.WriteLine(blobContainerClient);
+            // Create the container if it doesn't already exist.
+            if (!await blobContainerClient.ExistsAsync()) {
+                await CreateObject(containerName);
+            }
+            
+            var blob = blobContainerClient.GetBlobClient(fileName);
+            
+            await using var fs = File.OpenRead(filePath);
+            await blob.UploadAsync(filePath);
         }
 
         public Task DownloadObject(string objectUrl, string destinationUri)
@@ -20,9 +40,32 @@ namespace ImageApi.Azure
             throw new NotImplementedException();
         }
 
-        public Task<bool> ObjectExists(string objectUrl)
+        public async Task<bool> ObjectExists(string objectUrl)
         {
-            throw new NotImplementedException();
+            var (containerName, fileName) = parseObjectUrl(objectUrl);
+            
+            var blobContainerClient = new BlobContainerClient(storageConnectionString, containerName);
+            var blob = blobContainerClient.GetBlobClient(fileName);
+
+            // If there's no file name, it's a container
+            if (fileName == "")
+                return await blobContainerClient.ExistsAsync();
+            else
+                return await blob.ExistsAsync();
+        }
+        
+        public async Task RemoveObject(string objectUrl)
+        {
+            var (containerName, fileName) = parseObjectUrl(objectUrl);
+            
+            var blobContainerClient = new BlobContainerClient(storageConnectionString, containerName);
+            var blob = blobContainerClient.GetBlobClient(fileName);
+
+            // If there's no file name, it's a container
+            if (fileName == "") 
+                await blobContainerClient.DeleteAsync();    // Delete the container
+            else
+                await blob.DeleteAsync();   // Delete the blob
         }
 
         /// <summary>
@@ -36,6 +79,18 @@ namespace ImageApi.Azure
             string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
             BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
             await blobServiceClient.DeleteBlobContainerAsync(connectionString);
+        }
+        
+        /// <summary>
+        /// Parses the object url into a tuple of container name and file name
+        /// </summary>
+        /// <param name="objectUrl"></param>
+        /// <returns>A tuple containing the container name as its first element and an eventual file name as its second element</returns>
+        private (string, string) parseObjectUrl(string objectUrl) 
+        {
+            var fileName = objectUrl.Split("/").Length > 1 ? string.Join('/', objectUrl.Split("/")[1..]) : "";
+            var containerName = objectUrl.Split("/")[0];
+            return (containerName, fileName);     
         }
     }
 }
