@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using Azure;
-using Azure.Storage.Blobs;
+﻿using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 
@@ -43,7 +40,10 @@ namespace ImageApi.Azure
 
         public Task DownloadObject(string objectUrl, string destinationUri)
         {
-            throw new NotImplementedException();
+            var (containerName, fileName) = parseObjectUrl(objectUrl);
+            BlobContainerClient blobContainerClient = new BlobContainerClient(storageConnectionString,containerName);
+            BlobClient blob = blobContainerClient.GetBlobClient(fileName);
+            return blob.DownloadToAsync(destinationUri);
         }
 
         public async Task<bool> ObjectExists(string objectUrl)
@@ -122,7 +122,7 @@ namespace ImageApi.Azure
         {
             var fileName = objectUrl.Split("/").Length > 1 ? string.Join('/', objectUrl.Split("/")[1..]) : "";
             var containerName = objectUrl.Split("/")[0];
-            return (containerName, fileName);
+            return (containerName, fileName);     
         }
     }
 }
