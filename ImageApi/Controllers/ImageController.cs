@@ -29,8 +29,9 @@ namespace ImageApi.Controllers
 
         // POST api/<ImageController>
         [HttpPost]
-        public async Task<ImageAnalysis> AnalysisImage(IFormFile file)
+        public async Task<ImageAnalysis> AnalysisImage(IFormFile file,[FromForm]string parameter)
         {
+           
             string filePath = await SaveImageToDisk(file);
 
             string uri = await SaveImageToAzure("imganalysis",file.FileName, filePath);
