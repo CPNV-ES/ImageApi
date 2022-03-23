@@ -23,15 +23,27 @@ namespace ImageApi.Controllers
         public ImageController(IWebHostEnvironment environment)
         {
             _hostingEnvironment = environment;
-         
+            _blobManager = new AzureBlobManager(connectionString);
+            _cvManager = new CvManager(cognitiveEndPoint, cognitiveKey);
+
         }
         
 
         // POST api/<ImageController>
         [HttpPost]
-        public async Task<ImageAnalysis> Post(IFormFile file)
+        public async Task<ImageAnalysis> AnalysisImage(IFormFile file)
         {
-            //  A REFACTOR 
+            string filePath = await SaveImageToDisk(file);
+
+            string uri = await SaveImageToAzure("imganalysis",file.FileName, filePath);
+
+            ImageAnalysis imageAnalized = await sendFileToAnalyze(uri);
+            await RemoveImageFromAzure("imganalysis", file.FileName);
+            return imageAnalized;
+        }
+
+        private async Task<string> SaveImageToDisk(IFormFile file)
+        {
             string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "uploads");
             string filePath = "";
             if (file.Length > 0)
@@ -42,17 +54,35 @@ namespace ImageApi.Controllers
                     await file.CopyToAsync(fileStream);
                 }
             }
-           
-            await _blobManager.CreateObject("imganalysis/" + file.FileName, filePath);
+            return filePath;
+        }
+        private async Task<string> SaveImageToAzure(string container, string fileName, string filePath)
+        {
+            string objectUri = container + "/" + fileName;
+            await _blobManager.CreateObject(objectUri, filePath);
 
-            var uri  = _blobManager.GetServiceSasUriForBlob(file.FileName, "imganalysis");
+            var uri = _blobManager.GetServiceSasUriForBlob(fileName, container);
+            return uri;
+        }
+        private async Task<ImageAnalysis> sendFileToAnalyze(string uri)
+        {
             var client = await _cvManager.CreateClient();
 
-            // Traité en interne
-
             ImageAnalysis imageAnalized = await _cvManager.AnalyzeImage(client, uri);
-            await _blobManager.RemoveObject("imganalysis/" + file.FileName);
+            //
             return imageAnalized;
+        }
+
+        private async Task<bool> RemoveImageFromAzure(string container, string fileName)
+        {
+            try
+            {
+                await _blobManager.RemoveObject(container + "/" + fileName);
+                return true;
+            } catch {
+                throw new Exception("A problem occured during the suppression process.");
+            }
+            
         }
     }
 }
