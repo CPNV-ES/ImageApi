@@ -6,6 +6,6 @@ namespace ImageApi.Azure
     public interface ICvManager
     {
         Task<ComputerVisionClient> CreateClient();
-        Task<ImageAnalysis> AnalyzeImage(ComputerVisionClient client, string imageUrl);
+        Task<ImageAnalysis> AnalyzeImage(ComputerVisionClient client, string imageUrl, float minConfidence, int maxLabels);
     }
 }
