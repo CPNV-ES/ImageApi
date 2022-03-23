@@ -67,7 +67,7 @@ namespace ImageApi.Controllers
         {
             var client = await _cvManager.CreateClient();
 
-            ImageAnalysis imageAnalized = await _cvManager.AnalyzeImage(client, uri);
+            ImageAnalysis imageAnalized = await _cvManager.AnalyzeImage(client, uri, 80, 3);
             //
             return imageAnalized;
         }

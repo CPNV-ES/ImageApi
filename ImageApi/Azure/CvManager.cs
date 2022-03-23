@@ -34,7 +34,7 @@ namespace ImageApi.Azure
         /// <param name="client"></param>
         /// <param name="imageUrl"></param>
         /// <returns></returns>
-        public async Task<ImageAnalysis> AnalyzeImage(ComputerVisionClient client, string imageUrl)
+        public async Task<ImageAnalysis> AnalyzeImage(ComputerVisionClient client, string imageUrl, float minConfidence, int maxLabels)
         {
             // Creating a list that defines the features to be extracted from the image. 
 
@@ -47,8 +47,15 @@ namespace ImageApi.Azure
                 VisualFeatureTypes.Objects
             };
 
-             return await client.AnalyzeImageAsync(imageUrl, features);
 
+            
+            var analysis = await client.AnalyzeImageAsync(imageUrl, features);
+            analysis.Tags = analysis.Tags.Where(t => t.Confidence > minConfidence).OrderByDescending(t => t.Confidence).Take(maxLabels).ToList();
+            analysis.Objects = analysis.Objects.Where(o => o.Confidence > minConfidence).ToList();
+
+            return analysis;
         }
+
+
     }
 }
