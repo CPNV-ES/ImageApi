@@ -28,12 +28,20 @@ namespace ImageApi.Controllers
          
         }
         
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="file">The in</param>
+        /// <param name="minConfidence"></param>
+        /// <param name="maxLabels"></param>
+        /// <returns></returns>
         // POST api/<ImageController>
         [HttpPost]
         public async Task<IActionResult> AnalysisImage(IFormFile file,[FromForm]float minConfidence, [FromForm]int maxLabels)
         {
-            if (minConfidence < 0 || minConfidence > 1 || maxLabels < 0)
+
+
+            if (minConfidence < 0 || minConfidence > 1 || maxLabels < 0 || !CheckFileExtension(file))
                 return BadRequest();
             string filePath = await SaveImageToDisk(file);
 
@@ -42,6 +50,20 @@ namespace ImageApi.Controllers
             ImageAnalysis imageAnalized = await sendFileToAnalyze(uri,minConfidence,maxLabels);
             await RemoveImageFromAzure("imganalysis", file.FileName);
             return Ok(imageAnalized);
+        }
+
+        private bool CheckFileExtension(IFormFile file)
+        {
+            var supportedTypes = new[] { "jpg", "png", "jpeg", "bmp", "svg"};
+            var fileExt = Path.GetExtension(file.FileName).Substring(1);
+            if (!supportedTypes.Contains(fileExt))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }  
         }
 
         private async Task<string> SaveImageToDisk(IFormFile file)
