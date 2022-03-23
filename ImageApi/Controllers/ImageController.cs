@@ -23,22 +23,25 @@ namespace ImageApi.Controllers
         public ImageController(IWebHostEnvironment environment)
         {
             _hostingEnvironment = environment;
+            _blobManager = new(connectionString);
+            _cvManager = new(cognitiveEndPoint, cognitiveKey);
          
         }
         
 
         // POST api/<ImageController>
         [HttpPost]
-        public async Task<ImageAnalysis> AnalysisImage(IFormFile file,[FromForm]string parameter)
+        public async Task<IActionResult> AnalysisImage(IFormFile file,[FromForm]float minConfidence, [FromForm]int maxLabels)
         {
-           
+            if (minConfidence < 0 || minConfidence > 1 || maxLabels < 0)
+                return BadRequest();
             string filePath = await SaveImageToDisk(file);
 
             string uri = await SaveImageToAzure("imganalysis",file.FileName, filePath);
 
-            ImageAnalysis imageAnalized = await sendFileToAnalyze(uri);
+            ImageAnalysis imageAnalized = await sendFileToAnalyze(uri,minConfidence,maxLabels);
             await RemoveImageFromAzure("imganalysis", file.FileName);
-            return imageAnalized;
+            return Ok(imageAnalized);
         }
 
         private async Task<string> SaveImageToDisk(IFormFile file)
@@ -63,11 +66,11 @@ namespace ImageApi.Controllers
             var uri = _blobManager.GetServiceSasUriForBlob(fileName, container);
             return uri;
         }
-        private async Task<ImageAnalysis> sendFileToAnalyze(string uri)
+        private async Task<ImageAnalysis> sendFileToAnalyze(string uri, float minConfidence, int maxLabel)
         {
             var client = await _cvManager.CreateClient();
 
-            ImageAnalysis imageAnalized = await _cvManager.AnalyzeImage(client, uri, 80, 3);
+            ImageAnalysis imageAnalized = await _cvManager.AnalyzeImage(client, uri, minConfidence, maxLabel);
             //
             return imageAnalized;
         }
