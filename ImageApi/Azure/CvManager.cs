@@ -1,4 +1,6 @@
-﻿using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
+﻿using System.Text;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 
 namespace ImageApi.Azure
@@ -47,8 +49,29 @@ namespace ImageApi.Azure
                 VisualFeatureTypes.Objects
             };
 
-             return await client.AnalyzeImageAsync(imageUrl, features);
+            var analysis = await client.AnalyzeImageAsync(imageUrl, features);
+                                                                                   
+            var sql = ImageAnalysisToSql(analysis, imageUrl); 
+            
+            return analysis;
+        }
 
+        public static string ImageAnalysisToSql(ImageAnalysis analysis, string imageUrl)
+        {
+            var sql = new StringBuilder();
+            sql.AppendLine($"insert into `image` values (0, '{imageUrl})', '<name>', '<hash>');");
+            sql.AppendLine($"insert into `analyse` values (0, LAST_INSERT_ID(), '<ip>', '2021-01-01', '2021-01-01');");
+
+            sql.AppendLine("declare @analyse_id as int = LAST_INSERT_ID();");
+            foreach(var tag in analysis.Tags)
+            {
+                sql.AppendLine($"insert into `object` values (0, @analyse_id, 'tag')");
+                sql.AppendLine("insert into `attribute` values ");
+                sql.AppendLine("(0, LAST_INSERT_ID(), 'name', '" + tag.Name + "'),");
+                sql.AppendLine("(0, LAST_INSERT_ID(), 'confidence', '" + tag.Confidence+ "'),");
+            }
+            
+            return sql.ToString();
         }
     }
 }
