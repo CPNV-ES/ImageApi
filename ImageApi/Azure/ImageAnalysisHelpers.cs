@@ -14,55 +14,46 @@ public class ImageAnalysisHelpers
     
     public static string ImageAnalysisToSql(ImageAnalysis analysis, AnalysisQueryData queryData)
     {
-        void CreateAnalysis(StringBuilder sb)
-        {
+        void CreateAnalysis(StringBuilder sb) {
             var date = DateTime.Now.ToString("s").Replace("T", " ");
             sb.AppendLine($"insert into `image` values (0, '{queryData.ImageUrl})', '{queryData.ImageName}', '{queryData.ImageHash}');");
             sb.AppendLine($"insert into `analyse` values (0, LAST_INSERT_ID(), '{queryData.ClientIP}', '{date}', '{date}');");
             sb.AppendLine("set @analyse_id = LAST_INSERT_ID();");
         }
 
-        void CreateObject(StringBuilder sb, string objectCategory, string objectName)
-        {
+        void CreateObject(StringBuilder sb, string objectCategory, string objectName) {
             sb.AppendLine($"insert into `object` values (0, @analyse_id, '{objectCategory}', '{objectName}');");
         }
 
-        void OpenAttribute(StringBuilder sb)
-        {
+        void OpenAttribute(StringBuilder sb) {
             sb.AppendLine($"insert into `attribute` values ");
         }
 
-        void CloseAttribute(StringBuilder sb)
-        {
+        void CloseAttribute(StringBuilder sb) {
             sb.Remove(sb.Length - 3, 1);
             sb.Append(';');
         }
 
-        void AddStringAttributeValue(StringBuilder sb, string key, string value, string parentObjectId = "LAST_INSERT_ID()")
-        {
+        void AddStringAttributeValue(StringBuilder sb, string key, string value, string parentObjectId = "LAST_INSERT_ID()") {
             sb.AppendLine($"(0, {parentObjectId}, '{key}', 'string', '{value}', null, null),");
         }
 
-        void AddBoolAttributeValue(StringBuilder sb, string key, bool value, string parentObjectId = "LAST_INSERT_ID()")
-        {
+        void AddBoolAttributeValue(StringBuilder sb, string key, bool value, string parentObjectId = "LAST_INSERT_ID()") {
             sb.AppendLine($"(0, {parentObjectId}, '{key}', 'boolean', null, null, {(value ? "1" : "0")}),");
         }
 
-        void AddNumberAttributeValue(StringBuilder sb, string key, double value, string parentObjectId = "LAST_INSERT_ID()")
-        {
+        void AddNumberAttributeValue(StringBuilder sb, string key, double value, string parentObjectId = "LAST_INSERT_ID()") {
             sb.AppendLine($"(0, {parentObjectId}, '{key}', 'number', null, {value}, null),");
         }
 
-        void AddFaceRectAttributeValues(StringBuilder sb, string key, FaceRectangle value, string parentObjectId = "LAST_INSERT_ID()")
-        {
+        void AddFaceRectAttributeValues(StringBuilder sb, string key, FaceRectangle value, string parentObjectId = "LAST_INSERT_ID()") {
             AddNumberAttributeValue(sb, $"{key}_left", value.Left);
             AddNumberAttributeValue(sb, $"{key}_top", value.Top);
             AddNumberAttributeValue(sb, $"{key}_width", value.Width);
             AddNumberAttributeValue(sb, $"{key}_height", value.Height);
         }
 
-        void AddBoundingRectAttributeValues(StringBuilder sb, string key, BoundingRect value, string parentObjectId = "LAST_INSERT_ID()")
-        {
+        void AddBoundingRectAttributeValues(StringBuilder sb, string key, BoundingRect value, string parentObjectId = "LAST_INSERT_ID()") {
             AddNumberAttributeValue(sb, $"{key}_left", value.X);
             AddNumberAttributeValue(sb, $"{key}_top", value.Y);
             AddNumberAttributeValue(sb, $"{key}_width", value.W);
@@ -156,7 +147,7 @@ public class ImageAnalysisHelpers
             CloseAttribute(sql);
         }
 
-        // Faces 
+        // Objects 
         foreach(var obj in analysis.Objects)
         {
             CreateObject(sql, "objects", "");
@@ -166,7 +157,37 @@ public class ImageAnalysisHelpers
             AddBoundingRectAttributeValues(sql, "rectangle", obj.Rectangle);
             CloseAttribute(sql);
         }
-
+        
+        // Brands
+        foreach(var brand in analysis.Brands)
+        {
+            CreateObject(sql, "brands", "");
+            OpenAttribute(sql);
+            AddStringAttributeValue(sql, "name", brand.Name);
+            AddNumberAttributeValue(sql, "confidence", brand.Confidence);
+            AddBoundingRectAttributeValues(sql, "rectangle", brand.Rectangle);
+            CloseAttribute(sql);
+        }
+        
+        // Metadata
+        CreateObject(sql, "metadata", "");
+        OpenAttribute(sql);
+        AddStringAttributeValue(sql, "width", analysis.Metadata.Width.ToString());
+        AddStringAttributeValue(sql, "height", analysis.Metadata.Height.ToString());
+        AddStringAttributeValue(sql, "format", analysis.Metadata.Format);
+        CloseAttribute(sql);
+        
+        // Request id
+        CreateObject(sql, "requestId", "");
+        OpenAttribute(sql);
+        AddStringAttributeValue(sql, "requestId", analysis.RequestId);
+        CloseAttribute(sql);
+        
+        // Model version
+        CreateObject(sql, "modelVersion", "");
+        OpenAttribute(sql);
+        AddStringAttributeValue(sql, "modelVersion", analysis.ModelVersion);
+        CloseAttribute(sql);
 
         return sql.ToString();
     }
