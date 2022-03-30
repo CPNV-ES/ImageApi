@@ -27,7 +27,7 @@ namespace ImageApi.Controllers
             _cvManager = new(cognitiveEndPoint, cognitiveKey);
          
         }
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -37,12 +37,16 @@ namespace ImageApi.Controllers
         /// <returns></returns>
         // POST api/<ImageController>
         [HttpPost]
-        public async Task<IActionResult> AnalysisImage(IFormFile file,[FromForm]float minConfidence, [FromForm]int maxLabels)
+        public async Task<IActionResult> AnalysisImage(IFormFile file, [FromForm] float minConfidence, [FromForm] int maxLabels)
         {
 
+            minConfidence = minConfidence == 0 ? 0.8f : minConfidence;
+            maxLabels = maxLabels == 0 ? 10 : maxLabels;
 
             if (minConfidence < 0 || minConfidence > 1 || maxLabels < 0 || !CheckFileExtension(file))
                 return BadRequest();
+            
+
             string filePath = await SaveImageToDisk(file);
 
             string uri = await SaveImageToAzure("imganalysis",file.FileName, filePath);
