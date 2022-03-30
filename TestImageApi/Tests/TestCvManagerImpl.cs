@@ -1,8 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Threading.Tasks;
 using ImageApi.Azure;
-using Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 using Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 using NUnit.Framework;
 
@@ -41,7 +39,7 @@ namespace TestImageApi.Tests
         {
             var client = await cvManager.CreateClient();
 
-            results = await cvManager.AnalyzeImage(client, "https://storageaccountria2.blob.core.windows.net/imganalysis/t%C3%A9l%C3%A9chargement.png?sp=r&st=2022-03-10T10:21:51Z&se=2022-03-10T18:21:51Z&spr=https&sv=2020-08-04&sr=b&sig=b1nYCt0J2TYKUVLNN4pXRPlNLoFcsJHdIAOj3oSRoW4%3D");
+            results = await cvManager.AnalyzeImage(client, "https://images.squarespace-cdn.com/content/v1/5005bedd84ae929b3720c30f/1544403472316-BLKSLUI25Q69QIO8DWM8/jeux+en+famille+dans+les+party+de+No%C3%ABl-+temps+de+F%C3%AAtes-jouer-rire-id%C3%A9es+de+jeux-famille-enfant-Je+suis+une+maman?format=1000w", 0.8f, 3);
 
             Assert.IsNotNull(results);
         }
