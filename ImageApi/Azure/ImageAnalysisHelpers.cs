@@ -22,7 +22,7 @@ public class ImageAnalysisHelpers
         }
 
         void CreateObject(StringBuilder sb, string objectCategory, string objectName) {
-            sb.AppendLine($"insert into `object` values (0, @analyse_id, '{objectCategory}', '{objectName}');");
+            sb.AppendLine($"insert into `object` values (0, @analyse_id, '{objectName}', '{objectCategory}');");
         }
 
         void OpenAttribute(StringBuilder sb) {
@@ -110,7 +110,7 @@ public class ImageAnalysisHelpers
         // Tags
         foreach(var tag in analysis.Tags)
         {
-            CreateObject(sql, "imageType", "");
+            CreateObject(sql, "tags", "");
             OpenAttribute(sql);
             AddNumberAttributeValue(sql, tag.Name, tag.Confidence);
             CloseAttribute(sql);
