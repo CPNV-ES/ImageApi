@@ -48,8 +48,8 @@ namespace ImageApi.Controllers
             
 
             string filePath = await SaveImageToDisk(file);
-
-            string uri = await SaveImageToAzure("imganalysis",file.FileName, filePath);
+            string fileName = Path.GetRandomFileName().Replace(".", "") + Path.GetExtension(file.FileName);
+            string uri = await SaveImageToAzure("imganalysis", fileName, filePath);
 
             ImageAnalysis imageAnalized = await sendFileToAnalyze(uri,minConfidence,maxLabels);
 
@@ -65,7 +65,6 @@ namespace ImageApi.Controllers
             };
             var sql = ImageAnalysisHelpers.ImageAnalysisToSql(imageAnalized, analysisData);
             
-            await RemoveImageFromAzure("imganalysis", file.FileName);
             return Ok(imageAnalized);
         }
 
