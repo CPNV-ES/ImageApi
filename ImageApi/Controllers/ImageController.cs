@@ -46,24 +46,15 @@ namespace ImageApi.Controllers
             if (minConfidence < 0 || minConfidence > 1 || maxLabels < 0 || !CheckFileExtension(file))
                 return BadRequest();
             
-
             string filePath = await SaveImageToDisk(file);
             string fileName = Path.GetRandomFileName().Replace(".", "") + Path.GetExtension(file.FileName);
-            string uri = await SaveImageToAzure("imganalysis", fileName, filePath);
+            string url = await SaveImageToAzure("imganalysis", fileName, filePath);
 
-            ImageAnalysis imageAnalized = await sendFileToAnalyze(uri,minConfidence,maxLabels);
-
-            using var sha = SHA256.Create();
-            using var streamReader = new StreamReader(file.OpenReadStream());
-            var hash = BitConverter.ToString(sha.ComputeHash(streamReader.BaseStream)).Replace("-", "").ToLower();
-            var analysisData = new ImageAnalysisHelpers.AnalysisQueryData
-            {
-                ImageHash = hash,
-                ImageName = file.FileName,
-                ImageUrl = uri,
-                ClientIP = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
-            };
-            var sql = ImageAnalysisHelpers.ImageAnalysisToSql(imageAnalized, analysisData);
+            ImageAnalysis imageAnalized = await SendFileToAnalyze(url,minConfidence,maxLabels);
+            
+            var hash = GenerateFileHash(file.OpenReadStream());
+            string sql = GenerateSqlFromAnalysis(imageAnalized, hash, file.FileName, url);
+            await UploadStringToBlob($"imganalysis/{fileName}.sql", sql);
             
             return Ok(imageAnalized);
         }
@@ -72,14 +63,7 @@ namespace ImageApi.Controllers
         {
             var supportedTypes = new[] { "jpg", "png", "jpeg", "bmp", "svg"};
             var fileExt = Path.GetExtension(file.FileName).Substring(1);
-            if (!supportedTypes.Contains(fileExt))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }  
+            return supportedTypes.Contains(fileExt);  
         }
 
         private async Task<string> SaveImageToDisk(IFormFile file)
@@ -106,7 +90,7 @@ namespace ImageApi.Controllers
             return uri;
         }
         
-        private async Task<ImageAnalysis> sendFileToAnalyze(string uri, float minConfidence, int maxLabel)
+        private async Task<ImageAnalysis> SendFileToAnalyze(string uri, float minConfidence, int maxLabel)
         {
             var client = await _cvManager.CreateClient();
 
@@ -114,6 +98,32 @@ namespace ImageApi.Controllers
             //
             return imageAnalized;
         }
+
+        private string GenerateSqlFromAnalysis(ImageAnalysis analysis, string hash, string fileName, string fileUrl)
+        {
+            var analysisData = new ImageAnalysisHelpers.AnalysisQueryData
+            {
+                ImageHash = hash,
+                ImageName = fileName,
+                ImageUrl = fileUrl,
+                ClientIP = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
+            };
+            return ImageAnalysisHelpers.ImageAnalysisToSql(analysis, analysisData);
+        }
+
+        private string GenerateFileHash(Stream fileStream)
+        {
+            using var sha = SHA256.Create();
+            using var streamReader = new StreamReader(fileStream);
+            return BitConverter.ToString(sha.ComputeHash(streamReader.BaseStream)).Replace("-", "").ToLower();
+        }
+        
+        private async Task UploadStringToBlob(string fileName, string content)
+        {
+            var tmpSqlFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(fileName));
+            await System.IO.File.WriteAllTextAsync(tmpSqlFilePath, content);
+            await _blobManager.CreateObject($"imganalysis/{fileName}.sql", tmpSqlFilePath);
+        } 
 
         private async Task<bool> RemoveImageFromAzure(string container, string fileName)
         {
