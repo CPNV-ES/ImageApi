@@ -30,13 +30,12 @@ namespace ImageApi.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Uploads an image to the blob storage and returns the analysis results
         /// </summary>
-        /// <param name="file">The in</param>
+        /// <param name="file">The input file</param>
         /// <param name="minConfidence"></param>
         /// <param name="maxLabels"></param>
         /// <returns></returns>
-        // POST api/<ImageController>
         [HttpPost]
         public async Task<IActionResult> AnalysisImage(IFormFile file, [FromForm] float minConfidence, [FromForm] int maxLabels)
         {

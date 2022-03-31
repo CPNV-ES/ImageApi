@@ -1,3 +1,5 @@
+using Microsoft.OpenApi.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,7 +7,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c => {
+    c.SwaggerDoc("v1",
+    new OpenApiInfo
+    {
+        Title = "ImageAPI v1",
+        Version = "v1",
+    });
+    
+    var filePath = Path.Combine(System.AppContext.BaseDirectory, "ImageAPI.xml");
+    c.IncludeXmlComments(filePath);
+});
 
 var app = builder.Build();
 
