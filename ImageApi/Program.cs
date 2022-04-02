@@ -15,7 +15,7 @@ builder.Services.AddSwaggerGen(c => {
         Version = "v1",
     });
     
-    var filePath = Path.Combine(System.AppContext.BaseDirectory, "ImageAPI.xml");
+    var filePath = Path.Combine(System.AppContext.BaseDirectory, "ImageApi.xml");
     c.IncludeXmlComments(filePath);
 });
 

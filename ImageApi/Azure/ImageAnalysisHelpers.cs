@@ -30,8 +30,7 @@ public class ImageAnalysisHelpers
         }
 
         void CloseAttribute(StringBuilder sb) {
-            sb.Remove(sb.Length - 3, 1);
-            sb.Append(';');
+            sb.Replace(',', ';', sb.Length - Environment.NewLine.Length - 1, 1);
         }
 
         void AddStringAttributeValue(StringBuilder sb, string key, string value, string parentObjectId = "LAST_INSERT_ID()") {
