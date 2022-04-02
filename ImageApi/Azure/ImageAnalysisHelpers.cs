@@ -17,7 +17,7 @@ public class ImageAnalysisHelpers
         void CreateAnalysis(StringBuilder sb) {
             var date = DateTime.Now.ToString("s").Replace("T", " ");
             sb.AppendLine($"insert into `image` values (0, '{queryData.ImageUrl})', '{queryData.ImageName}', '{queryData.ImageHash}');");
-            sb.AppendLine($"insert into `analyse` values (0, LAST_INSERT_ID(), '{queryData.ClientIP}', '{date}', '{date}');");
+            sb.AppendLine($"insert into `analysis` values (0, LAST_INSERT_ID(), INET_ATON('{queryData.ClientIP}'), '{date}', '{date}');");
             sb.AppendLine("set @analyse_id = LAST_INSERT_ID();");
         }
 
