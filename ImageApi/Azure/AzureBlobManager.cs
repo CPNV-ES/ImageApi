@@ -78,13 +78,15 @@ namespace ImageApi.Azure
         {
             var blobContainerClient = new BlobContainerClient(storageConnectionString, containerName);
 
-
+            //TODO Q1 - What's happend if filename == null ?
             var blob = blobContainerClient.GetBlobClient(fileName);
 
             // Check whether this BlobClient object has been authorized with Shared Key.
+            //TODO Q2 - https://docs.microsoft.com/en-us/dotnet/api/azure.storage.blobs.blobcontainerclient.cangeneratesasuri?view=azure-dotnet
             if (blob.CanGenerateSasUri)
             {
                 // Create a SAS token that's valid for one hour.
+                //TODO Q3 - How to set for two hours ?
                 BlobSasBuilder sasBuilder = new BlobSasBuilder()
                 {
                     BlobContainerName = containerName,
@@ -108,6 +110,7 @@ namespace ImageApi.Azure
             }
             else
             {
+                //TODO Q4 - how you handle this return is it appropriate ? (help : imageController)
                 return null;
             }
         }
